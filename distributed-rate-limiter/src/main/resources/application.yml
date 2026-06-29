@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: ratelimiter
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 10
+        max-idle: 5
+        min-idle: 1
+
+server:
+  port: 8080
+
+# Rate Limiter Configuration
+# backend: "memory" (default) for in-memory (local dev) or "redis" for distributed
+rate-limiter:
+  enabled: true
+  backend: memory
+  default:
+    requests-per-second: 10
+    requests-per-minute: 100
+
+# Spring Cloud Gateway Configuration
+spring.cloud.gateway:
+  routes:
+    - id: public-api
+      uri: http://localhost:8081
+      predicates:
+        - Path=/api/public/**
+      filters:
+        - RateLimit
+
+    - id: premium-api
+      uri: http://localhost:8082
+      predicates:
+        - Path=/api/premium/**
+      filters:
+        - RateLimit
+
+    - id: internal-api
+      uri: http://localhost:8083
+      predicates:
+        - Path=/api/internal/**
+      filters:
+        - RateLimit
+
+    - id: rate-limiter-admin
+      uri: http://localhost:8080
+      predicates:
+        - Path=/api/rate-limiter/**
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.vansh.personal.ratelimiter: DEBUG
+
