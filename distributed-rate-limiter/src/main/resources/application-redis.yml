@@ -1,0 +1,21 @@
+# Redis Profile Configuration
+# Activates the Redis-backed distributed rate limiter
+# Usage: java -jar app.jar --spring.profiles.active=redis
+
+spring:
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: 0
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 2
+      shutdown-timeout: 200ms
+
+rate-limiter:
+  backend: redis
+
