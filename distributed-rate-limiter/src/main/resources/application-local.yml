@@ -1,0 +1,11 @@
+# Local Profile Configuration
+# In-memory, single-instance rate limiter for local development
+# Usage: java -jar app.jar --spring.profiles.active=local
+
+rate-limiter:
+  backend: memory
+
+logging:
+  level:
+    com.vansh.personal.ratelimiter: DEBUG
+

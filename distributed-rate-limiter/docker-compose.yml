@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: distributed-rate-limiter-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - rate-limiter-net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: distributed-rate-limiter-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/rate-limiter/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rate-limiter-net
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+
+networks:
+  rate-limiter-net:
+    driver: bridge
+
